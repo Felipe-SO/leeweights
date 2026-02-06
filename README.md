@@ -13,6 +13,6 @@ As in Semenova (2025), the direction of monotonicity is allowed to vary across t
 
 `treatment(varname)`: Binary treatment indicator.
 
-`tight(varlist)`: List of variables on which the covariate space will be partitioned through a full interaction.
+`tight(varlist)`: List of variables on which the covariate space will be partitioned through a full interaction. Used to define regions of conditional monotonicity and intensity of differential attrition.
 
 `suffix(name)`: Suffix for the weight variables. Preceded by `wgt_[lb|ub]_`.
