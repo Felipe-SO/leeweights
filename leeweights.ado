@@ -1,8 +1,8 @@
 program leeweights    
+    set output error
     version 16
-
     syntax varname, select(varname) TREATment(varname) [tight(varlist) suffix(name)]
-
+    qui{
     if "`suffix'" != "" local suffix = "_`suffix'" 
     tempvar interaction
     tempvar s1_hat
@@ -132,4 +132,5 @@ program leeweights
     replace wgt_ub`suffix' = . if mi(`varlist')
     replace wgt_lb`suffix' = . if mi(`varlist')
 end
+
 
