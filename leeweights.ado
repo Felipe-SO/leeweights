@@ -1,9 +1,10 @@
 program leeweights    
     version 16
 
-    syntax varname, select(varname) TREATment(varname) [tight(varname) suffix(name)]
+    syntax varname, select(varname) TREATment(varname) [tight(varlist) suffix(name)]
 
     if "`suffix'" != "" local suffix = "_`suffix'" 
+    tempvar interaction
     tempvar s1_hat
     tempvar s0_hat
     tempvar tau_hat
@@ -20,9 +21,10 @@ program leeweights
     tempvar ll
     tempvar ul
     // Generating survey response variable
-    reg `select' i.(`tight') if `treatment' == 1
+    egen `interaction' = group(`tight')
+    reg `select' i.(`interaction') if `treatment' == 1
     predict `s1_hat', xb
-    reg `select' i.(`tight') if `treatment' == 0
+    reg `select' i.(`interaction') if `treatment' == 0
     predict `s0_hat', xb
     gen `tau_hat' = `s1_hat'-`s0_hat'
     gen `d_help'  = `tau_hat' > 0
@@ -130,3 +132,4 @@ program leeweights
     replace wgt_ub`suffix' = . if mi(`varlist')
     replace wgt_lb`suffix' = . if mi(`varlist')
 end
+
