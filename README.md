@@ -1,5 +1,5 @@
 # leeweights
-Weights to implement Lee bounds (Lee, 2009) with fractional trimming and discrete conditional monotonicity (Semenova, 2025).
+Calculates weights to implement Lee bounds (Lee, 2009) with fractional trimming and discrete conditional monotonicity (Semenova, 2025).
 
 Fractional trimming assigns partial weight to the boundary observation(s) when the trimming proportion falls between discrete jumps of the empirical distribution, most notably in the presence of tied values at the trimming cutoff.
 
