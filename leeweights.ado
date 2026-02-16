@@ -17,6 +17,7 @@ program leeweights
     tempvar d_help
     tempvar d_hurt
     tempvar d_0
+    tempvar p_cut
     tempvar tmp_neg
     tempvar pct_utail
     tempvar pct_ltail
@@ -32,6 +33,9 @@ program leeweights
     gen `d_help'  = `tau_hat' > 0 `if'
     gen `d_hurt'  = `tau_hat' < 0 `if'
     gen `d_0'     = `tau_hat' == 0 `if'
+    gen `p_cut'   = 0 if `d_0' == 1 `andif'
+    replace `p_cut' = 1 - `s0_hat'/`s1_hat' if `d_help' `andif'
+    replace `p_cut' = 1 - `s1_hat'/`s0_hat' if `d_hurt' `andif'
 
     sort `tight' `treatment' `varlist'
     di 1
@@ -44,19 +48,19 @@ program leeweights
     gen wgt_ub`suffix' = 0 `if'
     replace wgt_ub`suffix' = 1 if (`d_0' == 1) `andif'
     ** Upper bound for X(help) - Trimming the lower tail of treatment
-    replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_help' == 1 & `treatment' == 1 & `pct_ltail' > abs(`tau_hat')) `andif'
+    replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_help' == 1 & `treatment' == 1 & `pct_ltail' > abs(`p_cut')) `andif'
     * Reweighting for non-exact quantiles
     bys `tight' `treatment' (`varlist'): ///
         egen `ll' = ///
-            max(0*(`pct_ltail'>=abs(`tau_hat')) + ///
-            `pct_ltail'*(`pct_ltail'<abs(`tau_hat'))) ///
+            max(0*(`pct_ltail'>=abs(`p_cut')) + ///
+            `pct_ltail'*(`pct_ltail'<abs(`p_cut'))) ///
         if (`select' == 1 & `d_help' == 1 & `treatment' == 1) `andif'
     bys `tight' `treatment' (`varlist'): ///
         egen `ul' = ///
-            min(1*(`pct_ltail'<abs(`tau_hat')) + ///
-            `pct_ltail'*(`pct_ltail'>=abs(`tau_hat'))) ///
+            min(1*(`pct_ltail'<abs(`p_cut')) + ///
+            `pct_ltail'*(`pct_ltail'>=abs(`p_cut'))) ///
         if (`select' == 1 & `d_help' == 1 & `treatment' == 1 ) `andif'
-    replace wgt_ub`suffix' = (`ul' - abs(`tau_hat')) / (`ul'-`ll') ///
+    replace wgt_ub`suffix' = (`ul' - abs(`p_cut')) / (`ul'-`ll') ///
         if (`select' == 1 & `d_help' == 1 & `treatment' == 1 & `pct_ltail' > `ll' & `pct_ltail' <= `ul') `andif'
     drop `ul' `ll'    
     di 3
@@ -67,19 +71,19 @@ program leeweights
     replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 1) `andif'
     di 4
     ** Upper bound for X(hurt) - Trimming the upper tail of control
-    replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0 & `pct_utail' > abs(`tau_hat')) `andif'
+    replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0 & `pct_utail' > abs(`p_cut')) `andif'
     * Reweighting for non-exact quantiles
     bys `tight' `treatment' (`varlist'): ///
         egen `ll' = ///
-            max(0*(`pct_utail'>=abs(`tau_hat')) + ///
-            `pct_utail'*(`pct_utail'<abs(`tau_hat'))) ///
+            max(0*(`pct_utail'>=abs(`p_cut')) + ///
+            `pct_utail'*(`pct_utail'<abs(`p_cut'))) ///
         if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0) `andif'
     bys `tight' `treatment' (`varlist'): ///
         egen `ul' = ///
-            min(1*(`pct_utail'<abs(`tau_hat')) + ///
-            `pct_utail'*(`pct_utail'>=abs(`tau_hat'))) ///
+            min(1*(`pct_utail'<abs(`p_cut')) + ///
+            `pct_utail'*(`pct_utail'>=abs(`p_cut'))) ///
         if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0) `andif'
-    replace wgt_ub`suffix' = (`ul' - abs(`tau_hat')) / (`ul'-`ll') ///
+    replace wgt_ub`suffix' = (`ul' - abs(`p_cut')) / (`ul'-`ll') ///
         if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0 & `pct_utail' > `ll' & `pct_utail' <= `ul') `andif'
     drop `ul' `ll'    
 
@@ -88,19 +92,19 @@ program leeweights
     gen wgt_lb`suffix' = 0 `if'
     replace wgt_lb`suffix' = 1 if (`d_0' == 1) `andif'
     ** Lower bound for X(help) - Trimming the upper tail of treatment
-    replace wgt_lb`suffix' = 1 if (`select' == 1 & `d_help' == 1 & `treatment' == 1 & `pct_utail' > abs(`tau_hat')) `andif'
+    replace wgt_lb`suffix' = 1 if (`select' == 1 & `d_help' == 1 & `treatment' == 1 & `pct_utail' > abs(`p_cut')) `andif'
     * Reweighting when there are ties
     bys `tight' `treatment' (`varlist'): ///
         egen `ll' = ///
-            max(0*(`pct_utail'>=abs(`tau_hat')) + ///
-            `pct_utail'*(`pct_utail'<abs(`tau_hat'))) ///
+            max(0*(`pct_utail'>=abs(`p_cut')) + ///
+            `pct_utail'*(`pct_utail'<abs(`p_cut'))) ///
         if (`select' == 1 & `d_help' == 1 & `treatment' == 1) `andif'
     bys `tight' `treatment' (`varlist'): ///
         egen `ul' = ///
-            min(1*(`pct_utail'<abs(`tau_hat')) + ///
-            `pct_utail'*(`pct_utail'>=abs(`tau_hat'))) ///
+            min(1*(`pct_utail'<abs(`p_cut')) + ///
+            `pct_utail'*(`pct_utail'>=abs(`p_cut'))) ///
         if (`select' == 1 & `d_help' == 1 & `treatment' == 1) `andif' 
-    replace wgt_lb`suffix' = (`ul' - abs(`tau_hat')) / (`ul'-`ll') ///
+    replace wgt_lb`suffix' = (`ul' - abs(`p_cut')) / (`ul'-`ll') ///
         if (`select' == 1 & `d_help' == 1 & `treatment' == 1 & `pct_utail' > `ll' & `pct_utail' <= `ul') `andif'
     drop `ul' `ll'     
 
@@ -111,19 +115,19 @@ program leeweights
     replace wgt_lb`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 1) `andif'
 
     ** Lower bound for X(hurt) - Trimming the lower tail of control
-    replace wgt_lb`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0 & `pct_ltail' > abs(`tau_hat')) `andif'
+    replace wgt_lb`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0 & `pct_ltail' > abs(`p_cut')) `andif'
     * Reweighting for non-exact quantiles
     bys `tight' `treatment' (`varlist'): ///
         egen `ll' = ///
-            max(0*(`pct_ltail'>=abs(`tau_hat')) + ///
-            `pct_ltail'*(`pct_ltail'<abs(`tau_hat'))) ///
+            max(0*(`pct_ltail'>=abs(`p_cut')) + ///
+            `pct_ltail'*(`pct_ltail'<abs(`p_cut'))) ///
         if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0) `andif'
     bys `tight' `treatment' (`varlist'): ///
         egen `ul' = ///
-            min(1*(`pct_ltail'<abs(`tau_hat')) + ///
-            `pct_ltail'*(`pct_ltail'>=abs(`tau_hat'))) ///
+            min(1*(`pct_ltail'<abs(`p_cut')) + ///
+            `pct_ltail'*(`pct_ltail'>=abs(`p_cut'))) ///
         if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0) `andif'
-    replace wgt_lb`suffix' = (`ul' - abs(`tau_hat')) / (`ul'-`ll') ///
+    replace wgt_lb`suffix' = (`ul' - abs(`p_cut')) / (`ul'-`ll') ///
         if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0 & `pct_ltail' > `ll' & `pct_ltail' <= `ul') `andif'
     drop `ul' `ll'  
     drop `tmp_neg' `pct_utail' `pct_ltail' 
@@ -137,3 +141,4 @@ program leeweights
         replace wgt_lb`suffix' = wgt_lb`suffix'*`exp'
     }
 end
+
