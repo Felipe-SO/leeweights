@@ -23,11 +23,10 @@ program leeweights
     tempvar pct_ltail
     tempvar ll
     tempvar ul
-    // Generating survey response variable
-    egen `interaction' = group(`tight') `if'
-    reg `select' i.(`interaction') `wgtexp' if `treatment' == 1 `andif'
+    egen `interaction' = group(`tight') `if' // Full interaction of variables in varlist
+    reg `select' i.(`interaction') `wgtexp' if `treatment' == 1 `andif' // Conditional selection probabilities for treatment
     predict `s1_hat' `if', xb
-    reg `select' i.(`interaction') `wgtexp' if `treatment' == 0  `andif'
+    reg `select' i.(`interaction') `wgtexp' if `treatment' == 0  `andif' // Conditional selection probabilities for control
     predict `s0_hat' `if', xb
     gen `tau_hat' = `s1_hat'-`s0_hat' `if'
     gen `d_help'  = `tau_hat' > 0 `if'
@@ -38,11 +37,11 @@ program leeweights
     replace `p_cut' = 1 - `s1_hat'/`s0_hat' if `d_hurt' `andif'
 
     sort `tight' `treatment' `varlist'
-    di 1
+    
     gen `tmp_neg' = -`varlist' `if'
     bys `tight' `treatment' (`varlist'): cumul `varlist' `awgt' if !mi(`varlist') `andif', equal gen(`pct_ltail')
     bys `tight' `treatment' (`varlist'): cumul `tmp_neg' `awgt' if !mi(`varlist') `andif', equal gen(`pct_utail')
-    di 2
+    
     *** Lee upper bound weights
     cap drop wgt_ub`suffix'
     gen wgt_ub`suffix' = 0 `if'
@@ -63,13 +62,13 @@ program leeweights
     replace wgt_ub`suffix' = (`ul' - abs(`p_cut')) / (`ul'-`ll') ///
         if (`select' == 1 & `d_help' == 1 & `treatment' == 1 & `pct_ltail' > `ll' & `pct_ltail' <= `ul') `andif'
     drop `ul' `ll'    
-    di 3
+    
     ** Upper bound for X(help) - Full Control
     replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_help' == 1 & `treatment' == 0) `andif'
 
     ** Upper bound for X(hurt) - Full `treatment'
     replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 1) `andif'
-    di 4
+    
     ** Upper bound for X(hurt) - Trimming the upper tail of control
     replace wgt_ub`suffix' = 1 if (`select' == 1 & `d_hurt' == 1 & `treatment' == 0 & `pct_utail' > abs(`p_cut')) `andif'
     * Reweighting for non-exact quantiles
